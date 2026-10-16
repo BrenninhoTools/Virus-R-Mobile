@@ -5,7 +5,7 @@ import flixel.FlxCamera;
 import flixel.math.FlxRect;
 import Song.SwagSong;
 import Section.SwagSection;
-import flixel.system.FlxSound;
+import flixel.sound.FlxSound;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.util.FlxAxes;
 import flixel.FlxSubState;
@@ -23,7 +23,6 @@ import flixel.util.FlxSort;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
-import io.newgrounds.NG;
 import lime.app.Application;
 import lime.utils.Assets;
 import flixel.math.FlxMath;
@@ -60,9 +59,9 @@ class DiffOverview extends FlxSubState
 
         FlxG.cameras.add(camGame);
 
-        FlxG.cameras.add(camHUD);
+        FlxG.cameras.add(camHUD, false);
 
-		FlxCamera.defaultCameras = [camGame];
+		FlxG.cameras.setDefaultDrawTarget(camGame, true);
 
         playerStrums = new FlxTypedGroup<FlxSprite>();
 

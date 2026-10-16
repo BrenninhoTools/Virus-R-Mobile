@@ -1,5 +1,9 @@
 package;
 
+#if mobile
+import mobile.TouchUtil;
+#end
+
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.graphics.frames.FlxAtlasFrames;
@@ -59,7 +63,7 @@ class GitarooPause extends MusicBeatState
 		if (controls.LEFT_P || controls.RIGHT_P)
 			changeThing();
 
-		if (controls.ACCEPT)
+		if (controls.ACCEPT #if mobile || TouchUtil.tapped #end)
 		{
 			if (replaySelect)
 			{

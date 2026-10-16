@@ -1,5 +1,9 @@
 package;
 
+#if mobile
+import mobile.TouchUtil;
+#end
+
 import flixel.input.gamepad.FlxGamepad;
 import flixel.FlxG;
 import flixel.FlxSprite;
@@ -224,6 +228,10 @@ class StoryMenuState extends MusicBeatState
 
 		trace("Line 165");
 
+		#if mobile
+		addBackButton();
+		#end
+
 		super.create();
 	}
 
@@ -245,6 +253,8 @@ class StoryMenuState extends MusicBeatState
 		{
 			lock.y = grpWeekText.members[lock.ID].y;
 		});
+
+		var touchAccept = false;
 
 		if (!movedBack)
 		{
@@ -282,15 +292,33 @@ class StoryMenuState extends MusicBeatState
 					}
 				}
 
-				if (FlxG.keys.justPressed.UP)
+				if (FlxG.keys.justPressed.UP #if mobile || TouchUtil.swipeUp #end)
 				{
 					changeWeek(-1);
 				}
 
-				if (FlxG.keys.justPressed.DOWN)
+				if (FlxG.keys.justPressed.DOWN #if mobile || TouchUtil.swipeDown #end)
 				{
 					changeWeek(1);
 				}
+
+				#if mobile
+				if (TouchUtil.tappedOn(leftArrow, 15))
+					changeDifficulty(-1);
+				else if (TouchUtil.tappedOn(rightArrow, 15))
+					changeDifficulty(1);
+				else
+				{
+					var tappedWeek = TouchUtil.tappedMember(grpWeekText);
+					if (tappedWeek != -1)
+					{
+						if (tappedWeek == curWeek)
+							touchAccept = true;
+						else
+							changeWeek(tappedWeek - curWeek);
+					}
+				}
+				#end
 
 				if (controls.RIGHT)
 					rightArrow.animation.play('press')
@@ -308,7 +336,7 @@ class StoryMenuState extends MusicBeatState
 					changeDifficulty(-1);
 			}
 
-			if (controls.ACCEPT)
+			if (controls.ACCEPT || touchAccept)
 			{
 				transOut = null;
 

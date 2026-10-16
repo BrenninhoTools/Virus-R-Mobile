@@ -9,6 +9,11 @@ import openfl.Lib;
 import Conductor.BPMChangeEvent;
 import flixel.FlxG;
 import flixel.addons.ui.FlxUIState;
+#if mobile
+import flixel.FlxCamera;
+import mobile.MobileButton;
+import mobile.TouchUtil;
+#end
 
 class MusicBeatState extends FlxUIState
 {
@@ -24,6 +29,32 @@ class MusicBeatState extends FlxUIState
 		return PlayerSettings.player1.controls;
 
 	private var assets:Array<FlxBasic> = [];
+
+	#if mobile
+	public var backButton:MobileButton;
+	public var camMobile:FlxCamera;
+
+	public function addMobileCamera():FlxCamera
+	{
+		if (camMobile == null)
+		{
+			camMobile = new FlxCamera();
+			camMobile.bgColor = FlxColor.TRANSPARENT;
+			FlxG.cameras.add(camMobile, false);
+		}
+		return camMobile;
+	}
+
+	public function addBackButton():MobileButton
+	{
+		backButton = new MobileButton(0, 0, 'backButton', 'back', 0.5);
+		backButton.setPosition(FlxG.width - backButton.width - 20, FlxG.height - backButton.height - 20);
+		backButton.cameras = [addMobileCamera()];
+		add(backButton);
+		TouchUtil.backButton = backButton;
+		return backButton;
+	}
+	#end
 
 	override function add(Object:flixel.FlxBasic):flixel.FlxBasic
 	{

@@ -1,12 +1,16 @@
 package;
 
+#if mobile
+import mobile.TouchUtil;
+#end
+
 import flixel.input.gamepad.FlxGamepad;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import openfl.Lib;
 import Options;
 import Controls.Control;
-import flash.text.TextField;
+import openfl.text.TextField;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.display.FlxGridOverlay;
@@ -26,7 +30,9 @@ class OptionsMenu extends MusicBeatState
 
 	var options:Array<OptionCategory> = [
 		new OptionCategory("Gameplay", [
+			#if !mobile
 			new DFJKOption(controls),
+			#end
 			new DownscrollOption("Toggle making the notes scroll down rather than up."),
 			new GhostTapOption("Toggle counting pressing a directional input when no arrow is there as a miss."),
 			new Judgement("Customize your Hit Timings. (LEFT or RIGHT)"),
@@ -135,6 +141,10 @@ class OptionsMenu extends MusicBeatState
 		
 		changeSelection();
 
+		#if mobile
+		addBackButton();
+		#end
+
 		super.create();
 	}
 
@@ -185,10 +195,22 @@ class OptionsMenu extends MusicBeatState
 				}
 			}
 			
-			if (FlxG.keys.justPressed.UP)
+			if (FlxG.keys.justPressed.UP #if mobile || TouchUtil.swipeUp #end)
 				changeSelection(-1);
-			if (FlxG.keys.justPressed.DOWN)
+			if (FlxG.keys.justPressed.DOWN #if mobile || TouchUtil.swipeDown #end)
 				changeSelection(1);
+
+			var touchAccept = false;
+			#if mobile
+			var tappedOption = TouchUtil.tappedMember(grpControls);
+			if (tappedOption != -1)
+			{
+				if (tappedOption == curSelected)
+					touchAccept = true;
+				else
+					changeSelection(tappedOption - curSelected);
+			}
+			#end
 			
 			if (isCat)
 			{
@@ -203,9 +225,9 @@ class OptionsMenu extends MusicBeatState
 						}
 					else
 					{
-						if (FlxG.keys.justPressed.RIGHT)
+						if (FlxG.keys.justPressed.RIGHT #if mobile || TouchUtil.swipeRight #end)
 							currentSelectedCat.getOptions()[curSelected].right();
-						if (FlxG.keys.justPressed.LEFT)
+						if (FlxG.keys.justPressed.LEFT #if mobile || TouchUtil.swipeLeft #end)
 							currentSelectedCat.getOptions()[curSelected].left();
 					}
 				}
@@ -251,7 +273,7 @@ class OptionsMenu extends MusicBeatState
 			if (controls.RESET)
 					FlxG.save.data.offset = 0;
 
-			if (controls.ACCEPT)
+			if (controls.ACCEPT || touchAccept)
 			{
 				if (isCat)
 				{

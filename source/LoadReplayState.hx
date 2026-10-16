@@ -9,7 +9,7 @@ import sys.FileSystem;
 #end
 import Controls.KeyboardScheme;
 import Controls.Control;
-import flash.text.TextField;
+import openfl.text.TextField;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.display.FlxGridOverlay;

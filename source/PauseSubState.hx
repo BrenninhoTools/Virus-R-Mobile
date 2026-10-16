@@ -1,5 +1,9 @@
 package;
 
+#if mobile
+import mobile.TouchUtil;
+#end
+
 import flixel.input.gamepad.FlxGamepad;
 import openfl.Lib;
 #if windows
@@ -12,7 +16,7 @@ import flixel.FlxSubState;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.input.keyboard.FlxKey;
-import flixel.system.FlxSound;
+import flixel.sound.FlxSound;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
@@ -82,7 +86,7 @@ class PauseSubState extends MusicBeatSubstate
 		perSongOffset.scrollFactor.set();
 		perSongOffset.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		
-		#if cpp
+		#if desktop
 			add(perSongOffset);
 		#end
 
@@ -148,7 +152,7 @@ class PauseSubState extends MusicBeatSubstate
 			changeSelection(1);
 		}
 		
-		#if cpp
+		#if desktop
 			else if (controls.LEFT_P || leftPcontroller)
 			{
 				oldOffset = PlayState.songOffset;
@@ -205,7 +209,25 @@ class PauseSubState extends MusicBeatSubstate
 			}
 		#end
 
-		if (controls.ACCEPT && !FlxG.keys.pressed.ALT)
+		var touchAccept = false;
+		#if mobile
+		var tappedItem = TouchUtil.tappedMember(grpMenuShit);
+		if (tappedItem != -1)
+		{
+			if (tappedItem == curSelected)
+				touchAccept = true;
+			else
+				changeSelection(tappedItem - curSelected);
+		}
+
+		if (TouchUtil.androidBack && menuItems.contains('Resume'))
+		{
+			close();
+			return;
+		}
+		#end
+
+		if ((controls.ACCEPT && !FlxG.keys.pressed.ALT) || touchAccept)
 		{
 			var daSelected:String = menuItems[curSelected];
 

@@ -63,7 +63,7 @@ class GameplayCustomizeState extends MusicBeatState
 
 		camHUD = new FlxCamera();
 		camHUD.bgColor.alpha = 0;
-        FlxG.cameras.add(camHUD);
+        FlxG.cameras.add(camHUD, false);
 
         camHUD.zoom = FlxG.save.data.zoom;
 
@@ -152,7 +152,11 @@ class GameplayCustomizeState extends MusicBeatState
         sick.y = FlxG.save.data.changedHitY;
 
 
+        #if mobile
+        addBackButton();
+        #else
         FlxG.mouse.visible = true;
+        #end
 
     }
 

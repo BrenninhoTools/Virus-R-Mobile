@@ -1,5 +1,9 @@
 package;
 
+#if mobile
+import mobile.TouchUtil;
+#end
+
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.text.FlxTypeText;
@@ -217,7 +221,7 @@ class DialogueBox extends FlxSpriteGroup
 			kill();
 		}
 
-		if (PlayerSettings.player1.controls.ACCEPT && dialogueStarted == true)
+		if ((PlayerSettings.player1.controls.ACCEPT #if mobile || TouchUtil.tapped #end) && dialogueStarted == true)
 		{
 			remove(dialogue);
 				

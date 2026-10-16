@@ -16,14 +16,13 @@ import flixel.group.FlxGroup;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
-import flixel.system.FlxSound;
+import flixel.sound.FlxSound;
 import flixel.system.ui.FlxSoundTray;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
-import io.newgrounds.NG;
 import lime.app.Application;
 import openfl.Assets;
 
@@ -31,7 +30,7 @@ import openfl.Assets;
 import Discord.DiscordClient;
 #end
 
-#if cpp
+#if desktop
 import sys.thread.Thread;
 #end
 
@@ -58,7 +57,7 @@ class TitleState extends MusicBeatState
 	//	polymod.Polymod.init({modRoot: "mods", dirs: ['introMod']});
 	//	#end
 		
-		#if sys
+		#if desktop
 		if (!sys.FileSystem.exists(Sys.getCwd() + "/assets/replays"))
 			sys.FileSystem.createDirectory(Sys.getCwd() + "/assets/replays");
 		#end
@@ -68,7 +67,7 @@ class TitleState extends MusicBeatState
 			trace("Loaded " + openfl.Assets.getLibrary("default").assetsLoaded + " assets (DEFAULT)");
 		}
 		
-		#if !cpp
+		#if !desktop
 
 		FlxG.save.bind('funkin', 'ninjamuffin99');
 
@@ -105,7 +104,7 @@ class TitleState extends MusicBeatState
 		FlxG.switchState(new ChartingState());
 		clean();
 		#else
-		#if !cpp
+		#if !desktop
 		new FlxTimer().start(1, function(tmr:FlxTimer)
 		{
 			startIntro();

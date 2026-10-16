@@ -1,5 +1,11 @@
 package;
 
+#if mobile
+import mobile.Hitbox;
+import mobile.MobileButton;
+import mobile.TouchUtil;
+#end
+
 
 import Song.Event;
 import openfl.media.Sound;
@@ -14,7 +20,7 @@ import openfl.ui.Keyboard;
 import openfl.events.KeyboardEvent;
 import Replay.Ana;
 import Replay.Analysis;
-#if cpp
+#if desktop
 import webm.WebmPlayer;
 #end
 import flixel.input.keyboard.FlxKey;
@@ -54,7 +60,7 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxMath;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
-import flixel.system.FlxSound;
+import flixel.sound.FlxSound;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
@@ -69,10 +75,10 @@ import lime.utils.Assets;
 import openfl.display.BlendMode;
 import openfl.display.StageQuality;
 import openfl.filters.ShaderFilter;
-#if cpp
+#if desktop
 import Discord.DiscordClient;
 #end
-#if cpp
+#if desktop
 import Sys;
 import sys.FileSystem;
 #end
@@ -113,7 +119,7 @@ class PlayState extends MusicBeatState
 	var songLength:Float = 0;
 	var kadeEngineWatermark:FlxText;
 
-	#if cpp
+	#if desktop
 	// Discord RPC variables
 	var storyDifficultyText:String = "";
 	var iconRPC:String = "";
@@ -187,6 +193,12 @@ class PlayState extends MusicBeatState
 	public var camHUD:FlxCamera;
 	public var camSustains:FlxCamera;
 	public var camNotes:FlxCamera;
+
+	#if mobile
+	public var camControls:FlxCamera;
+	public var hitbox:Hitbox;
+	public var pauseButton:MobileButton;
+	#end
 
 	private var camGame:FlxCamera;
 	public var cannotDie = false;
@@ -350,14 +362,14 @@ class PlayState extends MusicBeatState
 
 		removedVideo = false;
 
-		#if cpp
+		#if desktop
 		executeModchart = FileSystem.exists(Paths.lua(songLowercase + "/modchart"));
 		if (isSM)
 			executeModchart = FileSystem.exists(pathToSm + "/modchart.lua");
 		if (executeModchart)
 			PlayStateChangeables.Optimize = false;
 		#end
-		#if !cpp
+		#if !desktop
 		executeModchart = false; // FORCE disable for non cpp targets
 		#end
 
@@ -421,13 +433,18 @@ class PlayState extends MusicBeatState
 		camNotes.bgColor.alpha = 0;
 
 		FlxG.cameras.reset(camGame);
-		FlxG.cameras.add(camHUD);
-		FlxG.cameras.add(camSustains);
-		FlxG.cameras.add(camNotes);
+		FlxG.cameras.add(camHUD, false);
+		FlxG.cameras.add(camSustains, false);
+		FlxG.cameras.add(camNotes, false);
+
+		#if mobile
+		camControls = new FlxCamera();
+		camControls.bgColor = FlxColor.TRANSPARENT;
+		FlxG.cameras.add(camControls, false);
+		#end
 
 		camHUD.zoom = PlayStateChangeables.zoom;
 
-		FlxCamera.defaultCameras = [camGame];
 
 		persistentUpdate = true;
 		persistentDraw = true;
@@ -1075,8 +1092,45 @@ class PlayState extends MusicBeatState
 
 		FlxG.stage.addEventListener(KeyboardEvent.KEY_DOWN, handleInput);
 		FlxG.stage.addEventListener(KeyboardEvent.KEY_UP, releaseInput);
+
+		#if mobile
+		createMobileControls();
+		#end
+
 		super.create();
 	}
+
+	#if mobile
+	function createMobileControls():Void
+	{
+		pauseButton = new MobileButton(0, 0, 'pauseButton', 'pause', 0.9);
+		pauseButton.setPosition(FlxG.width - pauseButton.width - 20, 20);
+		pauseButton.cameras = [camControls];
+
+		hitbox = new Hitbox();
+		hitbox.cameras = [camControls];
+		hitbox.ignore = pauseButton;
+		hitbox.onPress = notePress;
+		hitbox.onRelease = noteRelease;
+
+		add(hitbox);
+		add(pauseButton);
+
+		setMobileControlsVisible(false);
+	}
+
+	function setMobileControlsVisible(value:Bool):Void
+	{
+		if (hitbox != null)
+		{
+			if (!value)
+				hitbox.releaseAll();
+			hitbox.visible = value && !PlayStateChangeables.botPlay && !loadRep;
+		}
+		if (pauseButton != null)
+			pauseButton.visible = value;
+	}
+	#end
 
 	function schoolIntro(?dialogueBox:DialogueBox):Void
 	{
@@ -1110,6 +1164,10 @@ class PlayState extends MusicBeatState
 
 	function diaEnd():Void
 	{
+		#if mobile
+		setMobileControlsVisible(false);
+		#end
+
 		endingSong = true;
 		inCutscene = true;
 		startingSong = true;
@@ -1147,7 +1205,7 @@ class PlayState extends MusicBeatState
 
 	var luaWiggles:Array<WiggleEffect> = [];
 
-	#if cpp
+	#if desktop
 	public static var luaModchart:ModchartState = null;
 	#end
 
@@ -1161,7 +1219,7 @@ class PlayState extends MusicBeatState
 
 
 
-		#if cpp
+		#if desktop
 		// pre lowercasing the song name (startCountdown)
 		var songLowercase = StringTools.replace(PlayState.SONG.song, " ", "-").toLowerCase();
 		switch (songLowercase)
@@ -1180,6 +1238,10 @@ class PlayState extends MusicBeatState
 
 		talking = false;
 		startedCountdown = true;
+
+		#if mobile
+		setMobileControlsVisible(true);
+		#end
 		Conductor.songPosition = 0;
 		Conductor.songPosition -= Conductor.crochet * 5;
 
@@ -1289,7 +1351,16 @@ class PlayState extends MusicBeatState
 
 	var keys = [false, false, false, false];
 
-	private function releaseInput(evt:KeyboardEvent):Void // handles releases
+	private function releaseInput(evt:KeyboardEvent):Void
+	{
+		var data = getKeyData(evt);
+		if (data == -1)
+			return;
+
+		noteRelease(data);
+	}
+
+	function getKeyData(evt:KeyboardEvent):Int
 	{
 		@:privateAccess
 		var key = FlxKey.toStringMap.get(Keyboard.__convertKeyCode(evt.keyCode));
@@ -1303,7 +1374,7 @@ class PlayState extends MusicBeatState
 
 		var data = -1;
 
-		switch (evt.keyCode) // arrow keys
+		switch (evt.keyCode)
 		{
 			case 37:
 				data = 0;
@@ -1315,70 +1386,44 @@ class PlayState extends MusicBeatState
 				data = 3;
 		}
 
-		for (i in 0...binds.length) // binds
+		if (key != null)
 		{
-			if (binds[i].toLowerCase() == key.toLowerCase())
-				data = i;
+			for (i in 0...binds.length)
+			{
+				if (binds[i] != null && binds[i].toLowerCase() == key.toLowerCase())
+					data = i;
+			}
 		}
 
-		if (data == -1)
-			return;
+		return data;
+	}
 
+	function noteRelease(data:Int):Void
+	{
 		keys[data] = false;
 	}
 
 	public var closestNotes:Array<Note> = [];
-	
 
 	private function handleInput(evt:KeyboardEvent):Void
-	{ // this actually handles press inputs
-
+	{
 		if (PlayStateChangeables.botPlay || loadRep || paused)
 			return;
 
-		// first convert it from openfl to a flixel key code
-		// then use FlxKey to get the key's name based off of the FlxKey dictionary
-		// this makes it work for special characters
-
-		@:privateAccess
-		var key = FlxKey.toStringMap.get(Keyboard.__convertKeyCode(evt.keyCode));
-
-		var binds:Array<String> = [
-			FlxG.save.data.leftBind,
-			FlxG.save.data.downBind,
-			FlxG.save.data.upBind,
-			FlxG.save.data.rightBind
-		];
-
-		var data = -1;
-
-		switch (evt.keyCode) // arrow keys
-		{
-			case 37:
-				data = 0;
-			case 40:
-				data = 1;
-			case 38:
-				data = 2;
-			case 39:
-				data = 3;
-		}
-
-		for (i in 0...binds.length) // binds
-		{
-			if (binds[i].toLowerCase() == key.toLowerCase())
-				data = i;
-		}
+		var data = getKeyData(evt);
 		if (data == -1)
-		{
-			trace("couldn't find a keybind with the code " + key);
 			return;
-		}
+
+		notePress(data);
+	}
+
+	function notePress(data:Int):Void
+	{
+		if (PlayStateChangeables.botPlay || loadRep || paused)
+			return;
+
 		if (keys[data])
-		{
-			trace("ur already holding " + key);
 			return;
-		}
 
 		keys[data] = true;
 
@@ -1600,7 +1645,7 @@ class PlayState extends MusicBeatState
 		var playerCounter:Int = 0;
 
 		// Per song offset check
-		#if cpp
+		#if desktop
 		// pre lowercasing the song name (generateSong)
 		var songLowercase = StringTools.replace(PlayState.SONG.song, " ", "-").toLowerCase();
 		switch (songLowercase)
@@ -1864,6 +1909,11 @@ class PlayState extends MusicBeatState
 
 	override function openSubState(SubState:FlxSubState)
 	{
+		#if mobile
+		if (hitbox != null)
+			hitbox.releaseAll();
+		#end
+
 		if (paused)
 		{
 			if (FlxG.sound.music != null)
@@ -1872,7 +1922,7 @@ class PlayState extends MusicBeatState
 				vocals.pause();
 			}
 
-			#if cpp
+			#if desktop
 			DiscordClient.changePresence("PAUSED on "
 				+ SONG.song
 				+ " ("
@@ -1906,7 +1956,7 @@ class PlayState extends MusicBeatState
 				startTimer.active = true;
 			paused = false;
 
-			#if cpp
+			#if desktop
 			if (startTimer.finished)
 			{
 				DiscordClient.changePresence(detailsText
@@ -1944,7 +1994,7 @@ class PlayState extends MusicBeatState
 		vocals.time = Conductor.songPosition;
 		vocals.play();
 
-		#if cpp
+		#if desktop
 		DiscordClient.changePresence(detailsText
 			+ " "
 			+ SONG.song
@@ -2054,7 +2104,7 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		#if cpp
+		#if desktop
 		if (executeModchart && luaModchart != null && songStarted)
 		{
 			luaModchart.setVar('songPos', Conductor.songPosition);
@@ -2165,7 +2215,15 @@ class PlayState extends MusicBeatState
 
 		scoreTxt.x = (originalX - (lengthInPx / 2)) + 335;
 
-		if (controls.PAUSE && startedCountdown && canPause && !cannotDie)
+		var pausePressed = controls.PAUSE;
+		#if mobile
+		if (pauseButton != null && pauseButton.visible && pauseButton.justPressed)
+			pausePressed = true;
+		if (TouchUtil.androidBack)
+			pausePressed = true;
+		#end
+
+		if (pausePressed && startedCountdown && canPause && !cannotDie)
 		{
 			persistentUpdate = false;
 			persistentDraw = true;
@@ -2195,7 +2253,7 @@ class PlayState extends MusicBeatState
 				removedVideo = true;
 			}
 			cannotDie = true;
-			#if cpp
+			#if desktop
 			DiscordClient.changePresence("Chart Editor", null, null, true);
 			#end
 
@@ -2203,7 +2261,7 @@ class PlayState extends MusicBeatState
 			clean();
 			FlxG.stage.removeEventListener(KeyboardEvent.KEY_DOWN, handleInput);
 			FlxG.stage.removeEventListener(KeyboardEvent.KEY_UP, releaseInput);
-			#if cpp
+			#if desktop
 			if (luaModchart != null)
 			{
 				luaModchart.die();
@@ -2258,7 +2316,7 @@ class PlayState extends MusicBeatState
 			clean();
 			FlxG.stage.removeEventListener(KeyboardEvent.KEY_DOWN, handleInput);
 			FlxG.stage.removeEventListener(KeyboardEvent.KEY_UP, releaseInput);
-			#if cpp
+			#if desktop
 			if (luaModchart != null)
 			{
 				luaModchart.die();
@@ -2273,7 +2331,7 @@ class PlayState extends MusicBeatState
 			clean();
 			FlxG.stage.removeEventListener(KeyboardEvent.KEY_DOWN, handleInput);
 			FlxG.stage.removeEventListener(KeyboardEvent.KEY_UP, releaseInput);
-			#if cpp
+			#if desktop
 			if (luaModchart != null)
 			{
 				luaModchart.die();
@@ -2476,7 +2534,7 @@ class PlayState extends MusicBeatState
 				}
 			}
 
-			#if cpp
+			#if desktop
 			if (luaModchart != null)
 				luaModchart.setVar("mustHit", PlayState.SONG.notes[Std.int(curStep / 16)].mustHitSection);
 			#end
@@ -2485,7 +2543,7 @@ class PlayState extends MusicBeatState
 			{
 				var offsetX = 0;
 				var offsetY = 0;
-				#if cpp
+				#if desktop
 				if (luaModchart != null)
 				{
 					offsetX = luaModchart.getVar("followXOffset", "float");
@@ -2493,7 +2551,7 @@ class PlayState extends MusicBeatState
 				}
 				#end
 				camFollow.setPosition(dad.getMidpoint().x + 150 + offsetX, dad.getMidpoint().y - 100 + offsetY);
-				#if cpp
+				#if desktop
 				if (luaModchart != null)
 					luaModchart.executeState('playerTwoTurn', []);
 				#end
@@ -2522,7 +2580,7 @@ class PlayState extends MusicBeatState
 			{
 				var offsetX = 0;
 				var offsetY = 0;
-				#if cpp
+				#if desktop
 				if (luaModchart != null)
 				{
 					offsetX = luaModchart.getVar("followXOffset", "float");
@@ -2531,7 +2589,7 @@ class PlayState extends MusicBeatState
 				#end
 				camFollow.setPosition(boyfriend.getMidpoint().x - 100 + offsetX, boyfriend.getMidpoint().y - 100 + offsetY);
 
-				#if cpp
+				#if desktop
 				if (luaModchart != null)
 					luaModchart.executeState('playerOneTurn', []);
 				#end
@@ -2633,7 +2691,7 @@ class PlayState extends MusicBeatState
 
 				openSubState(new GameOverSubstate(boyfriend.getScreenPosition().x, boyfriend.getScreenPosition().y));
 
-				#if cpp
+				#if desktop
 				// Game Over doesn't get his own variable because it's only used here
 				DiscordClient.changePresence("GAME OVER -- "
 					+ SONG.song
@@ -2669,7 +2727,7 @@ class PlayState extends MusicBeatState
 
 				openSubState(new GameOverSubstate(boyfriend.getScreenPosition().x, boyfriend.getScreenPosition().y));
 
-				#if cpp
+				#if desktop
 				// Game Over doesn't get his own variable because it's only used here
 				DiscordClient.changePresence("GAME OVER -- "
 					+ SONG.song
@@ -2693,6 +2751,11 @@ class PlayState extends MusicBeatState
 		if (generatedMusic)
 		{
 			var holdArray:Array<Bool> = [controls.LEFT, controls.DOWN, controls.UP, controls.RIGHT];
+			#if mobile
+			if (hitbox != null && hitbox.visible)
+				for (i in 0...holdArray.length)
+					holdArray[i] = holdArray[i] || hitbox.pressed[i];
+			#end
 
 			notes.forEachAlive(function(daNote:Note)
 			{
@@ -2853,7 +2916,7 @@ class PlayState extends MusicBeatState
 								});
 							}
 
-							#if cpp
+							#if desktop
 							if (luaModchart != null)
 								luaModchart.executeState('playerTwoSing', [Math.abs(daNote.noteData), Conductor.songPosition]);
 							#end
@@ -2888,7 +2951,7 @@ class PlayState extends MusicBeatState
 								});
 							}
 
-							#if cpp
+							#if desktop
 							if (luaModchart != null)
 								luaModchart.executeState('playerTwoSing', [Math.abs(daNote.noteData), Conductor.songPosition]);
 							#end
@@ -3100,6 +3163,10 @@ class PlayState extends MusicBeatState
 
 	function endSong():Void
 	{
+		#if mobile
+		setMobileControlsVisible(false);
+		#end
+
 		endingSong = true;
 		FlxG.stage.removeEventListener(KeyboardEvent.KEY_DOWN, handleInput);
 		FlxG.stage.removeEventListener(KeyboardEvent.KEY_UP, releaseInput);
@@ -3113,7 +3180,11 @@ class PlayState extends MusicBeatState
 
 
 		if (!loadRep)
+		{
+			#if desktop
 			rep.SaveReplay(saveNotes, saveJudge, replayAna);
+			#end
+		}
 		else
 		{
 			PlayStateChangeables.botPlay = false;
@@ -3124,7 +3195,7 @@ class PlayState extends MusicBeatState
 		if (FlxG.save.data.fpsCap > 290)
 			(cast(Lib.current.getChildAt(0), Main)).setFPSCap(290);
 
-		#if cpp
+		#if desktop
 		if (luaModchart != null)
 		{
 			luaModchart.die();
@@ -3204,7 +3275,7 @@ class PlayState extends MusicBeatState
 						clean();
 					}
 
-					#if cpp
+					#if desktop
 					if (luaModchart != null)
 					{
 						luaModchart.die();
@@ -3616,10 +3687,15 @@ class PlayState extends MusicBeatState
 	{
 		// control arrays, order L D R U
 		var holdArray:Array<Bool> = [controls.LEFT, controls.DOWN, controls.UP, controls.RIGHT];
+		#if mobile
+		if (hitbox != null && hitbox.visible)
+			for (i in 0...holdArray.length)
+				holdArray[i] = holdArray[i] || hitbox.pressed[i];
+		#end
 		var pressArray:Array<Bool> = [controls.LEFT_P, controls.DOWN_P, controls.UP_P, controls.RIGHT_P];
 		var releaseArray:Array<Bool> = [controls.LEFT_R, controls.DOWN_R, controls.UP_R, controls.RIGHT_R];
 		var keynameArray:Array<String> = ['left', 'down', 'up', 'right'];
-		#if cpp
+		#if desktop
 		if (luaModchart != null)
 		{
 			for (i in 0...pressArray.length) {
@@ -3895,7 +3971,7 @@ class PlayState extends MusicBeatState
 
 	public function backgroundVideo(source:String) // for background videos
 	{
-		#if cpp
+		#if desktop
 		useVideo = true;
 
 		FlxG.stage.window.onFocusOut.add(focusOut);
@@ -4011,7 +4087,7 @@ class PlayState extends MusicBeatState
 			// Hole switch statement replaced with a single line :)
 			boyfriend.playAnim('sing' + dataSuffix[direction] + 'miss', true);
 
-			#if cpp
+			#if desktop
 			if (luaModchart != null)
 				luaModchart.executeState('playerOneMiss', [direction, Conductor.songPosition]);
 			#end
@@ -4163,7 +4239,7 @@ class PlayState extends MusicBeatState
 
 			boyfriend.playAnim('sing' + dataSuffix[note.noteData] + altAnim, true);
 
-			#if cpp
+			#if desktop
 			if (luaModchart != null)
 				luaModchart.executeState('playerOneSing', [note.noteData, Conductor.songPosition]);
 			#end
@@ -4316,7 +4392,7 @@ class PlayState extends MusicBeatState
 			resyncVocals();
 		}
 
-		#if cpp
+		#if desktop
 		if (executeModchart && luaModchart != null)
 		{
 			luaModchart.setVar('curStep', curStep);
@@ -4416,7 +4492,7 @@ class PlayState extends MusicBeatState
 			notes.sort(FlxSort.byY, (PlayStateChangeables.useDownscroll ? FlxSort.ASCENDING : FlxSort.DESCENDING));
 		}
 
-		#if cpp
+		#if desktop
 		if (executeModchart && luaModchart != null)
 		{
 			luaModchart.executeState('beatHit', [curBeat]);

@@ -1,0 +1,94 @@
+name: Android Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HAXE_VERSION: 4.3.7
+  HXCPP_COMPILE_CACHE: ${{ github.workspace }}/.hxcpp_cache
+  HXCPP_CACHE_MB: 4000
+
+jobs:
+  build:
+    name: Android (ARM64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Android NDK
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r21e
+          local-cache: true
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: ${{ env.HAXE_VERSION }}
+
+      - name: Restore Haxelib Cache
+        id: haxelib-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/haxelib
+          key: haxelib-${{ runner.os }}-${{ env.HAXE_VERSION }}-${{ hashFiles('.github/workflows/android.yml') }}
+
+      - name: Restore Build Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .hxcpp_cache
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: build-android-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            build-android-${{ runner.os }}-
+
+      - name: Install Libraries
+        run: |
+          mkdir -p ~/haxelib
+          haxelib setup ~/haxelib
+          if [ "${{ steps.haxelib-cache.outputs.cache-hit }}" != "true" ]; then
+            haxelib install hxcpp 4.3.2 --quiet --always --skip-dependencies
+            haxelib install lime 8.3.2 --quiet --always --skip-dependencies
+            haxelib install openfl 9.5.2 --quiet --always --skip-dependencies
+            haxelib install flixel 6.2.0 --quiet --always --skip-dependencies
+            haxelib install flixel-addons 4.0.2 --quiet --always --skip-dependencies
+            haxelib install flixel-ui 2.6.5 --quiet --always --skip-dependencies
+            haxelib install hscript 2.7.0 --quiet --always --skip-dependencies
+            haxelib install actuate 1.9.0 --quiet --always --skip-dependencies
+          fi
+          haxelib list
+
+      - name: Configure Android
+        run: |
+          haxelib run lime config ANDROID_SDK $ANDROID_HOME
+          haxelib run lime config ANDROID_NDK_ROOT ${{ steps.ndk.outputs.ndk-path }}
+          haxelib run lime config JAVA_HOME $JAVA_HOME
+          haxelib run lime config ANDROID_SETUP true
+
+      - name: Build
+        run: haxelib run lime build android -arm64 -release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VirusR-Android-ARM64
+          path: export/release/android/bin/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          compression-level: 0

@@ -1,5 +1,10 @@
 package;
 
+#if mobile
+import mobile.TouchUtil;
+import mobile.MobileButton;
+#end
+
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxSubState;
@@ -13,6 +18,10 @@ class GameOverSubstate extends MusicBeatSubstate
 	var camFollow:FlxObject;
 
 	var stageSuffix:String = "";
+
+	#if mobile
+	var backButton:MobileButton;
+	#end
 
 	public function new(x:Float, y:Float)
 	{
@@ -46,6 +55,15 @@ class GameOverSubstate extends MusicBeatSubstate
 		FlxG.camera.target = null;
 
 		bf.playAnim('firstDeath');
+
+		#if mobile
+		backButton = new MobileButton(0, 0, 'backButton', 'back', 0.5);
+		backButton.setPosition(FlxG.width - backButton.width - 20, FlxG.height - backButton.height - 20);
+		if (PlayState.instance != null && PlayState.instance.camControls != null)
+			backButton.cameras = [PlayState.instance.camControls];
+		add(backButton);
+		TouchUtil.backButton = backButton;
+		#end
 	}
 
 	var startVibin:Bool = false;
@@ -54,7 +72,7 @@ class GameOverSubstate extends MusicBeatSubstate
 	{
 		super.update(elapsed);
 
-		if (controls.ACCEPT)
+		if (controls.ACCEPT #if mobile || (TouchUtil.tapped && !TouchUtil.tappedOn(backButton)) #end)
 		{
 			endBullshit();
 		}

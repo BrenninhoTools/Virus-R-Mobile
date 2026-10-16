@@ -129,12 +129,12 @@ class Paths
 	inline static public function getSparrowAtlas(key:String, ?library:String, ?isCharacter:Bool = false)
 	{
 		var usecahce = FlxG.save.data.cacheImages;
-		#if !cpp
+		#if !desktop
 		usecahce = false;
 		#end
 		if (isCharacter)
 			if (usecahce)
-				#if cpp
+				#if desktop
 				return FlxAtlasFrames.fromSparrow(imageCached(key), file('images/characters/$key.xml', library));
 				#else
 				return null;
@@ -144,7 +144,7 @@ class Paths
 		return FlxAtlasFrames.fromSparrow(image(key, library), file('images/$key.xml', library));
 	}
 
-	#if cpp
+	#if desktop
 	inline static public function imageCached(key:String):FlxGraphic
 	{
 		var data = Caching.bitmapData.get(key);
@@ -156,12 +156,12 @@ class Paths
 	inline static public function getPackerAtlas(key:String, ?library:String, ?isCharacter:Bool = false)
 	{
 		var usecahce = FlxG.save.data.cacheImages;
-		#if !cpp
+		#if !desktop
 		usecahce = false;
 		#end
 		if (isCharacter)
 			if (usecahce)
-				#if cpp
+				#if desktop
 				return FlxAtlasFrames.fromSpriteSheetPacker(imageCached(key), file('images/characters/$key.txt', library));
 				#else
 				return null;

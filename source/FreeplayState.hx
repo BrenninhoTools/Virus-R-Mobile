@@ -1,8 +1,12 @@
 package;
+
+#if mobile
+import mobile.TouchUtil;
+#end
 import lime.app.Application;
 import openfl.utils.Future;
 import openfl.media.Sound;
-import flixel.system.FlxSound;
+import flixel.sound.FlxSound;
 #if sys
 import smTools.SMFile;
 import sys.FileSystem;
@@ -10,7 +14,7 @@ import sys.io.File;
 #end
 import Song.SwagSong;
 import flixel.input.gamepad.FlxGamepad;
-import flash.text.TextField;
+import openfl.text.TextField;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.display.FlxGridOverlay;
@@ -91,7 +95,7 @@ class FreeplayState extends MusicBeatState
 			var diffsThatExist = [];
 
 
-			#if sys
+			#if desktop
 			if (FileSystem.exists('assets/data/${format}/${format}-hard.json'))
 				diffsThatExist.push("Hard");
 			if (FileSystem.exists('assets/data/${format}/${format}-easy.json'))
@@ -105,7 +109,16 @@ class FreeplayState extends MusicBeatState
 				continue;
 			}
 			#else
-			diffsThatExist = ["Easy","Normal","Hard"];
+			var lower = format.toLowerCase();
+			if (openfl.utils.Assets.exists('assets/data/${lower}/${lower}-hard.json'))
+				diffsThatExist.push("Hard");
+			if (openfl.utils.Assets.exists('assets/data/${lower}/${lower}-easy.json'))
+				diffsThatExist.push("Easy");
+			if (openfl.utils.Assets.exists('assets/data/${lower}/${lower}.json'))
+				diffsThatExist.push("Normal");
+
+			if (diffsThatExist.length == 0)
+				continue;
 			#end
 			if (diffsThatExist.contains("Easy"))
 				FreeplayState.loadDiff(0,format,meta.songName,diffs);
@@ -127,7 +140,7 @@ class FreeplayState extends MusicBeatState
 
 		trace("tryin to load sm files");
 
-		#if sys
+		#if desktop
 		for(i in FileSystem.readDirectory("assets/sm/"))
 		{
 			trace(i);
@@ -271,6 +284,10 @@ class FreeplayState extends MusicBeatState
 			trace(md);
 		 */
 
+		#if mobile
+		addBackButton();
+		#end
+
 		super.create();
 	}
 
@@ -316,9 +333,20 @@ class FreeplayState extends MusicBeatState
 			FlxG.sound.music.volume -= 0.5 * FlxG.elapsed;
 		}
 
-		var upP = FlxG.keys.justPressed.UP;
-		var downP = FlxG.keys.justPressed.DOWN;
+		var upP = FlxG.keys.justPressed.UP #if mobile || TouchUtil.swipeUp #end;
+		var downP = FlxG.keys.justPressed.DOWN #if mobile || TouchUtil.swipeDown #end;
 		var accepted = FlxG.keys.justPressed.ENTER;
+
+		#if mobile
+		var tappedSong = TouchUtil.tappedMember(grpSongs);
+		if (tappedSong != -1)
+		{
+			if (tappedSong == curSelected)
+				accepted = true;
+			else
+				changeSelection(tappedSong - curSelected);
+		}
+		#end
 
 		var gamepad:FlxGamepad = FlxG.gamepads.lastActive;
 
@@ -358,9 +386,9 @@ class FreeplayState extends MusicBeatState
 		//if (FlxG.keys.justPressed.SPACE && !openedPreview)
 			//openSubState(new DiffOverview());
 
-		if (FlxG.keys.justPressed.LEFT)
+		if (FlxG.keys.justPressed.LEFT #if mobile || TouchUtil.swipeLeft #end)
 			changeDiff(-1);
-		if (FlxG.keys.justPressed.RIGHT)
+		if (FlxG.keys.justPressed.RIGHT #if mobile || TouchUtil.swipeRight #end)
 			changeDiff(1);
 
 		if (controls.BACK)

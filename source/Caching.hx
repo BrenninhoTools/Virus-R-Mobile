@@ -11,7 +11,7 @@ import flixel.ui.FlxBar;
 import haxe.Exception;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-#if cpp
+#if desktop
 import sys.FileSystem;
 import sys.io.File;
 #end
@@ -96,7 +96,7 @@ class Caching extends MusicBeatState
 
 		FlxGraphic.defaultPersist = FlxG.save.data.cacheImages;
 
-		#if cpp
+		#if desktop
 		if (FlxG.save.data.cacheImages)
 		{
 			trace("caching images...");
@@ -131,7 +131,7 @@ class Caching extends MusicBeatState
 
 		trace('starting caching..');
 		
-		#if cpp
+		#if desktop
 		// update thread
 
 		sys.thread.Thread.create(() -> {

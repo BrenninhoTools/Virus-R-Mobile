@@ -145,22 +145,22 @@ class Controls extends FlxActionSet
 	public var UP_P(get, never):Bool;
 
 	inline function get_UP_P()
-		return _upP.check();
+		return _upP.check() #if mobile || (mobile.TouchUtil.menuInput && mobile.TouchUtil.swipeUp) #end;
 
 	public var LEFT_P(get, never):Bool;
 
 	inline function get_LEFT_P()
-		return _leftP.check();
+		return _leftP.check() #if mobile || (mobile.TouchUtil.menuInput && mobile.TouchUtil.swipeLeft) #end;
 
 	public var RIGHT_P(get, never):Bool;
 
 	inline function get_RIGHT_P()
-		return _rightP.check();
+		return _rightP.check() #if mobile || (mobile.TouchUtil.menuInput && mobile.TouchUtil.swipeRight) #end;
 
 	public var DOWN_P(get, never):Bool;
 
 	inline function get_DOWN_P()
-		return _downP.check();
+		return _downP.check() #if mobile || (mobile.TouchUtil.menuInput && mobile.TouchUtil.swipeDown) #end;
 
 	public var UP_R(get, never):Bool;
 
@@ -190,7 +190,7 @@ class Controls extends FlxActionSet
 	public var BACK(get, never):Bool;
 
 	inline function get_BACK()
-		return _back.check();
+		return _back.check() #if mobile || (mobile.TouchUtil.menuInput && mobile.TouchUtil.backPressed) #end;
 
 	public var PAUSE(get, never):Bool;
 

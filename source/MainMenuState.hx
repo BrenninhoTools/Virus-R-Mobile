@@ -1,5 +1,9 @@
 package;
 
+#if mobile
+import mobile.TouchUtil;
+#end
+
 import flixel.input.gamepad.FlxGamepad;
 import Controls.KeyboardScheme;
 import flixel.FlxG;
@@ -13,7 +17,6 @@ import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
-import io.newgrounds.NG;
 import lime.app.Application;
 import flixel.math.FlxMath;
 
@@ -147,6 +150,10 @@ class MainMenuState extends MusicBeatState
 
 		changeItem();
 
+		#if mobile
+		addBackButton();
+		#end
+
 		super.create();
 	}
 
@@ -177,13 +184,13 @@ class MainMenuState extends MusicBeatState
 				}
 			}
 
-			if (FlxG.keys.justPressed.UP)
+			if (FlxG.keys.justPressed.UP #if mobile || TouchUtil.swipeUp #end)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				changeItem(-1);
 			}
 
-			if (FlxG.keys.justPressed.DOWN)
+			if (FlxG.keys.justPressed.DOWN #if mobile || TouchUtil.swipeDown #end)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				changeItem(1);
@@ -194,7 +201,22 @@ class MainMenuState extends MusicBeatState
 				FlxG.switchState(new TitleState());
 			}
 
-			if (controls.ACCEPT)
+			var touchAccept = false;
+			#if mobile
+			var tappedItem = TouchUtil.tappedMember(menuItems);
+			if (tappedItem != -1 && finishedFunnyMove)
+			{
+				if (tappedItem == curSelected)
+					touchAccept = true;
+				else
+				{
+					FlxG.sound.play(Paths.sound('scrollMenu'));
+					changeItem(tappedItem - curSelected);
+				}
+			}
+			#end
+
+			if (controls.ACCEPT || touchAccept)
 			{
 				if (optionShit[curSelected] == 'donate')
 				{
