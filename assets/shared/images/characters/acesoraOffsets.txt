@@ -1,0 +1,10 @@
+idle 0 0
+singUP 0 0
+singRIGHT 0 0
+singLEFT 0 0 
+singDOWN 0 0
+singUP-alt 209 18
+singRIGHT-alt 211 12
+singLEFT-alt 190 11
+singDOWN-alt 190 6
+smile 0 0
