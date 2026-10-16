@@ -74,7 +74,8 @@ class OptionsMenu extends MusicBeatState
 		
 		#if mobile
 		new OptionCategory("Mobile Options", [
-			new InvisibleHitboxOption("Make the hitbox invisible while still being able to press it.")
+			new InvisibleHitboxOption("Make the hitbox invisible while still being able to press it."),
+			new InvisiblePauseButtonOption("Make the pause button invisible while still being able to press it.")
 		]),
 		#end
 

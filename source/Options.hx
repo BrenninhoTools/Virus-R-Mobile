@@ -186,6 +186,27 @@ class InvisibleHitboxOption extends Option
 	}
 }
 
+class InvisiblePauseButtonOption extends Option
+{
+	public function new(desc:String)
+	{
+		super();
+		description = desc;
+	}
+
+	public override function press():Bool
+	{
+		FlxG.save.data.invisiblePauseButton = !FlxG.save.data.invisiblePauseButton;
+		display = updateDisplay();
+		return true;
+	}
+
+	private override function updateDisplay():String
+	{
+		return "Invisible Pause Button " + (FlxG.save.data.invisiblePauseButton ? "ON" : "OFF");
+	}
+}
+
 class DownscrollOption extends Option
 {
 	public function new(desc:String)
@@ -959,6 +980,7 @@ class ResetSettings extends Option
 		FlxG.save.data.newInput = null;
 		FlxG.save.data.downscroll = null;
 		FlxG.save.data.invisibleHitbox = null;
+		FlxG.save.data.invisiblePauseButton = null;
 		FlxG.save.data.antialiasing = null;
 		FlxG.save.data.missSounds = null;
 		FlxG.save.data.dfjk = null;

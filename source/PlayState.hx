@@ -1106,6 +1106,8 @@ class PlayState extends MusicBeatState
 		pauseButton = new MobileButton(0, 0, 'pauseButton', 'pause', 0.9);
 		pauseButton.setPosition(FlxG.width - pauseButton.width - 20, 20);
 		pauseButton.cameras = [camControls];
+		if (FlxG.save.data.invisiblePauseButton)
+			pauseButton.alpha = 0;
 
 		hitbox = new Hitbox();
 		hitbox.cameras = [camControls];

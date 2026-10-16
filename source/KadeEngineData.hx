@@ -18,6 +18,9 @@ class KadeEngineData
 		if (FlxG.save.data.invisibleHitbox == null)
 			FlxG.save.data.invisibleHitbox = false;
 
+		if (FlxG.save.data.invisiblePauseButton == null)
+			FlxG.save.data.invisiblePauseButton = false;
+
 		if (FlxG.save.data.antialiasing == null)
 			FlxG.save.data.antialiasing = true;
 
