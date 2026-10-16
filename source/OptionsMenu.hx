@@ -72,6 +72,12 @@ class OptionsMenu extends MusicBeatState
 			new BotPlay("Showcase your charts and mods with autoplay.")
 		]),
 		
+		#if mobile
+		new OptionCategory("Mobile Options", [
+			new InvisibleHitboxOption("Make the hitbox invisible while still being able to press it.")
+		]),
+		#end
+
 		new OptionCategory("Saves and Data", [
 			#if desktop
 			new ReplayOption("View saved song replays."),

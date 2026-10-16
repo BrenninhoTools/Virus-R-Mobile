@@ -1072,6 +1072,10 @@ class PlayState extends MusicBeatState
 
 		trace('starting');
 
+		#if mobile
+		createMobileControls();
+		#end
+
 		if (isStoryMode)
 		{
 			switch (StringTools.replace(curSong, " ", "-").toLowerCase())
@@ -1093,10 +1097,6 @@ class PlayState extends MusicBeatState
 		FlxG.stage.addEventListener(KeyboardEvent.KEY_DOWN, handleInput);
 		FlxG.stage.addEventListener(KeyboardEvent.KEY_UP, releaseInput);
 
-		#if mobile
-		createMobileControls();
-		#end
-
 		super.create();
 	}
 
@@ -1116,7 +1116,7 @@ class PlayState extends MusicBeatState
 		add(hitbox);
 		add(pauseButton);
 
-		setMobileControlsVisible(false);
+		setMobileControlsVisible(startedCountdown);
 	}
 
 	function setMobileControlsVisible(value:Bool):Void

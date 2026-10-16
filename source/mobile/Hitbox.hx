@@ -12,7 +12,7 @@ import openfl.geom.Matrix;
 class Hitbox extends FlxSpriteGroup
 {
 	static final COLORS:Array<FlxColor> = [0xFFC24B99, 0xFF00FFFF, 0xFF12FA05, 0xFFF9393F];
-	static inline var IDLE_ALPHA:Float = 0.1;
+	static inline var IDLE_ALPHA:Float = 0.2;
 	static inline var PRESSED_ALPHA:Float = 0.6;
 
 	public var hints:Array<FlxSprite> = [];
@@ -30,7 +30,7 @@ class Hitbox extends FlxSpriteGroup
 		{
 			var hint = new FlxSprite(hintWidth * i, 0);
 			hint.loadGraphic(createGraphic(hintWidth, FlxG.height, COLORS[i]));
-			hint.alpha = IDLE_ALPHA;
+			hint.alpha = getAlpha(false);
 			hint.antialiasing = false;
 			hints.push(hint);
 			add(hint);
@@ -60,7 +60,7 @@ class Hitbox extends FlxSpriteGroup
 					onRelease(i);
 			}
 
-			hints[i].alpha = pressed[i] ? PRESSED_ALPHA : IDLE_ALPHA;
+			hints[i].alpha = getAlpha(pressed[i]);
 		}
 	}
 
@@ -74,8 +74,15 @@ class Hitbox extends FlxSpriteGroup
 				if (onRelease != null)
 					onRelease(i);
 			}
-			hints[i].alpha = IDLE_ALPHA;
+			hints[i].alpha = getAlpha(false);
 		}
+	}
+
+	function getAlpha(isPressed:Bool):Float
+	{
+		if (FlxG.save.data.invisibleHitbox)
+			return 0;
+		return isPressed ? PRESSED_ALPHA : IDLE_ALPHA;
 	}
 
 	function isHeld(hint:FlxSprite):Bool

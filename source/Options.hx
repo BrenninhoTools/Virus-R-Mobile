@@ -165,6 +165,27 @@ class EditorRes extends Option
 
 }
 
+class InvisibleHitboxOption extends Option
+{
+	public function new(desc:String)
+	{
+		super();
+		description = desc;
+	}
+
+	public override function press():Bool
+	{
+		FlxG.save.data.invisibleHitbox = !FlxG.save.data.invisibleHitbox;
+		display = updateDisplay();
+		return true;
+	}
+
+	private override function updateDisplay():String
+	{
+		return "Invisible Hitbox " + (FlxG.save.data.invisibleHitbox ? "ON" : "OFF");
+	}
+}
+
 class DownscrollOption extends Option
 {
 	public function new(desc:String)
@@ -937,6 +958,7 @@ class ResetSettings extends Option
 		FlxG.save.data.weekUnlocked = null;
 		FlxG.save.data.newInput = null;
 		FlxG.save.data.downscroll = null;
+		FlxG.save.data.invisibleHitbox = null;
 		FlxG.save.data.antialiasing = null;
 		FlxG.save.data.missSounds = null;
 		FlxG.save.data.dfjk = null;

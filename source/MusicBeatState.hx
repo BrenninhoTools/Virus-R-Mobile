@@ -47,7 +47,7 @@ class MusicBeatState extends FlxUIState
 
 	public function addBackButton():MobileButton
 	{
-		backButton = new MobileButton(0, 0, 'backButton', 'back', 0.5);
+		backButton = new MobileButton(0, 0, 'backButton', 'back', 0.7);
 		backButton.setPosition(FlxG.width - backButton.width - 20, FlxG.height - backButton.height - 20);
 		backButton.cameras = [addMobileCamera()];
 		add(backButton);
